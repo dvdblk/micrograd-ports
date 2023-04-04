@@ -3,7 +3,7 @@ name: Test micrograd ports
 on:
   push:
     paths:
-      - '.github/workflows/test-micrograd-swift.yaml'
+      - '.github/workflows/test-micrograd-ports.yaml'
       - 'micrograd-swift/**'
 
 jobs:
@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        working-directory: ./micrograd-swift
+        working-directory: micrograd-swift
         run: swift build
       - name: Run tests
-        working-directory: ./micrograd-swift
+        working-directory: micrograd-swift
         run: swift test
