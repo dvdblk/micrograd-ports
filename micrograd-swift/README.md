@@ -1,3 +1,3 @@
-# MicrogradSwift
+# micrograd-swift
 
-A description of this package.
+A port of [micrograd](https://github.com/karpathy/micrograd) written in Swift.
