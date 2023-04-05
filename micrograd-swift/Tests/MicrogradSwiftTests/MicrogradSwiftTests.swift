@@ -2,7 +2,7 @@ import XCTest
 @testable import MicrogradSwift
 
 final class TestEngine: XCTestCase {
-    func testValue() throws {
+    func testValueInit() throws {
         // Simple comparison
         XCTAssertEqual(Value(3), Value(3))
         XCTAssertNotEqual(Value(3.0), Value(2))
@@ -13,7 +13,7 @@ final class TestEngine: XCTestCase {
         XCTAssertEqual(Value(Double(2)), Value(2.0))
     }
     
-    func testValueToString() throws {
+    func testValueDescription() throws {
         XCTAssertEqual(Value(1).description, "1.0")
         XCTAssertEqual(Value(1.0).description, "1.0")
         XCTAssertEqual(Value(-1).description, "-1.0")
@@ -59,8 +59,17 @@ final class TestEngine: XCTestCase {
         }
     }
     
-    func testValueBackwardChildrenOrder() throws {
+    func testValueDuplicitChildren() throws {
+        let a = Value(4)
+        let b = a * a
         
+        XCTAssertEqual(b._prev, Set([a]))
+    }
+    
+    func testValueDefaultGrad() throws {
+        let a = Value(4)
+        
+        XCTAssertEqual(a.grad, 0)
     }
     
     func testValueBackwardOutputGrad() throws {
@@ -91,5 +100,44 @@ final class TestEngine: XCTestCase {
                 XCTAssertEqual(child.grad, 3)
             }
         }
+    }
+    
+    func testValueGrad() throws {
+        let a = Value(3.0)
+        let b = Value(4.0)
+        let c = a * b
+        //c.backward()
+        
+        XCTAssertEqual(a.grad, 4)
+        XCTAssertEqual(b.grad, 3)
+        XCTAssertEqual(c.grad, 1)
+        
+        let d = Value(-5)
+        let e = Value(16)
+        let f = d + e
+        //f.backward()
+        
+        XCTAssertEqual(d.grad, 1)
+        XCTAssertEqual(e.grad, 1)
+        XCTAssertEqual(f.grad, 1)
+        
+        // "nested" gradients to test chain rule
+        let g = c * f
+        g.backward(retainGraph: true)
+        
+        XCTAssertEqual(a.grad, 8)
+        XCTAssertEqual(b.grad, 6)
+        XCTAssertEqual(c.grad, 1)
+        XCTAssertEqual(d.grad, 1)
+        XCTAssertEqual(e.grad, 1)
+        XCTAssertEqual(f.grad, 1)
+        XCTAssertEqual(g.grad, 1)
+    }
+    
+    func testValueDuplicitChildrenGrad() {
+        let a = Value(4)
+        let b = a * a
+        b.backward(retainGraph: false)
+        XCTAssertEqual(a.grad, 4)
     }
 }
