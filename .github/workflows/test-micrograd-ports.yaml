@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        working-directory: micrograd-swift
+        working-directory: micrograd-swift/MicrogradSwift
         run: swift build
       - name: Run tests
-        working-directory: micrograd-swift
+        working-directory: micrograd-swift/MicrogradSwift
         run: swift test
