@@ -1,6 +1,8 @@
 # micrograd-swift
 
-The implementation is distributed as a Swift Package inside [MicrogradSwift/](MicrogradSwift/). A workspace playground can be found in [MicrogradSwift-Playground](MicrogradSwift-Playground/).
+The implementation is distributed as a Swift Package inside [MicrogradSwift/](MicrogradSwift/)
+
+A workspace playground can be found in [MicrogradSwift-Playground](MicrogradSwift-Playground/)
 
 ```Swift
 import MicrogradSwift
