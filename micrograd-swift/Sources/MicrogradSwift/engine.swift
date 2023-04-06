@@ -7,20 +7,20 @@
 
 import Foundation
 
+/// Smolest building block for the scalar autodiff engine.
 /// `Value` has to be a class because of `_backward` closure semantics.
-class Value: ExpressibleByFloatLiteral {
+final public class Value: ExpressibleByFloatLiteral {
     
     /// Variable and function names are intentionally matching the [micrograd](https://github.com/karpathy/micrograd) naming convention.
     public var data: Double
     public var grad: Double = 0
     var _prev: Set<Value>
-    var _backward: ((Bool) -> Void)? {
+    var _backward: (() -> Void)? {
         didSet {
-            if _backward == nil { _backwardOperator = "" }
+            if _backward == nil { _op = "" }
         }
     }
-    /// Used for properly hashing this `Value` as a `Hashable`
-    private var _backwardOperator: String = ""
+    var _op: String = ""
     
     init(_ scalar: Double, children: Set<Value> = Set<Value>()) {
         self.data = scalar
@@ -33,8 +33,8 @@ class Value: ExpressibleByFloatLiteral {
     ///
     ///     other = other if isinstance(other, Value) else Value(other)
     ///
-    typealias FloatLiteralType = Double
-    required init(floatLiteral value: Double) {
+    public typealias FloatLiteralType = Double
+    required public init(floatLiteral value: Double) {
         self.data = value
         self._prev = Set<Value>()
     }
@@ -42,7 +42,7 @@ class Value: ExpressibleByFloatLiteral {
 
 // MARK: Value+Equatable
 extension Value: Equatable {
-    static func == (lhs: Value, rhs: Value) -> Bool {
+    public static func == (lhs: Value, rhs: Value) -> Bool {
         // just compare the numeric values
         return lhs.data == rhs.data
     }
@@ -50,11 +50,8 @@ extension Value: Equatable {
 
 // MARK: Value+Hashable
 extension Value: Hashable {
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         self.data.hash(into: &hasher)
-        self.grad.hash(into: &hasher)
-        self._prev.hash(into: &hasher)
-        self._backwardOperator.hash(into: &hasher)
     }
 }
 
@@ -64,16 +61,11 @@ extension Value {
     public static func + (lhs: Value, rhs: Value) -> Value {
         let out = Value(lhs.data + rhs.data, children: [lhs, rhs])
         
-        out._backward = { retainGraph in
-            if retainGraph {
-                lhs.grad += out.grad
-                rhs.grad += out.grad
-            } else {
-                lhs.grad = out.grad
-                rhs.grad = out.grad
-            }
+        out._backward = {
+            lhs.grad += out.grad
+            rhs.grad += out.grad
         }
-        out._backwardOperator = "+"
+        out._op = "+"
         
         return out
     }
@@ -82,56 +74,89 @@ extension Value {
     public static func * (lhs: Value, rhs: Value) -> Value {
         let out = Value(lhs.data * rhs.data, children: [lhs, rhs])
         
-        out._backward = { retainGraph in
-            if retainGraph {
-                lhs.grad += rhs.data * out.grad
-                rhs.grad += lhs.data * out.grad
-                
-            } else {
-                lhs.grad = rhs.data * out.grad
-                rhs.grad = lhs.data * out.grad
-            }
+        out._backward = {
+            lhs.grad += rhs.data * out.grad
+            rhs.grad += lhs.data * out.grad
         }
-        out._backwardOperator = "*"
+        out._op = "*"
         
         return out
     }
     
     // MARK: Subtraction
     public static func - (lhs: Value, rhs: Value) -> Value {
-        let out = Value(lhs.data - rhs.data, children: [lhs, rhs])
-        
-        out._backward = { _ in
-            
-        }
-        
+        // Use addition and multiplication
+        let out = lhs + (rhs * (-1.0))
+        // Set correct op
+        out._op = "-"
         return out
     }
     
     // MARK: Division
     public static func / (lhs: Value, rhs: Value) -> Value {
-        let out = Value(lhs.data / rhs.data, children: [lhs, rhs])
-        
-        out._backward = { _ in
-            
-        }
-        
+        // Use exponentiation and multiplication
+        let out = lhs ** (rhs * -1.0)
+        // Set correct op
+        out._op = "/"
         return out
     }
+}
+
+// MARK: Exponentiation
+// exponentiation needs to be defined at file scope due to operator precedence
+precedencegroup ExponentiationPrecedence {
+    associativity: right
+    higherThan: MultiplicationPrecedence
+}
+infix operator ** : ExponentiationPrecedence
+func ** (lhs: Value, rhs: Value) -> Value {
+    let out = Value(pow(lhs.data, rhs.data), children: [lhs, rhs])
+    
+    out._backward = {
+        lhs.grad = rhs.data * (pow(lhs.data, rhs.data-1)) * out.grad
+    }
+    out._op = "**"
+    
+    return out
 }
 
 // MARK: - Nonlinearities
 extension Value {
     
+    // MARK: Exponential
+    public func exp() -> Value {
+        let out = Value(Darwin.exp(self.data), children: [self])
+        
+        out._backward = { [unowned self] in
+            self.grad += out.data * out.grad
+        }
+        out._op = "exp"
+        
+        return out
+    }
+    
     // MARK: Hyperbolic Tangent
     public func tanh() -> Value {
         let x = self.data
-        let t = (exp(2*x) - 1) / (exp(2*x) + 1)
+        let t = (Darwin.exp(2*x) - 1) / (Darwin.exp(2*x) + 1)
         let out = Value(t, children: [self])
         
-        out._backward = { [unowned self] _ in
-            self.grad = (1 - pow(out.data, 2)) * out.grad
+        out._backward = { [unowned self] in
+            self.grad += (1 - pow(out.data, 2)) * out.grad
         }
+        out._op = "tanh"
+        
+        return out
+    }
+    
+    // MARK: ReLU
+    public func relu() -> Value {
+        let out = Value(max(0, self.data), children: [self])
+        
+        out._backward = { [unowned self] in
+            self.grad += self.data <= 0 ? 0 : 1 * out.grad
+        }
+        out._op = "relu"
         
         return out
     }
@@ -143,7 +168,10 @@ extension Value {
     /// Compute and propagate gradients of the children until leaf nodes are reached (in a topological order)
     /// - Parameters:
     ///     - retainGraph: if `true` the previous gradients will be taken into account while computing new ones (i.e. useful for batch gradient updates). default =`false`
-    public func backward(retainGraph: Bool = false) {
+    /// - Returns:
+    ///     - self
+    @discardableResult
+    public func backward() -> Value {
         
         var topo = [Value]()
         var visited = Set<Value>()
@@ -157,13 +185,14 @@ extension Value {
             }
         }
         build_topo(self)
-        print(topo)
         
         self.grad = 1
         for node in topo.reversed() {
-            node._backward?(retainGraph)
-            print("\(node) | grad: \(node.grad)")
+            node._backward?()
+            // print("\(node) | grad: \(node.grad)")
         }
+        
+        return self
     }
 }
 
@@ -171,7 +200,7 @@ extension Value {
 // MARK: Value+CustomStringConvertible
 extension Value: CustomStringConvertible {
     /// Equivalent of `__repr__`
-    var description: String {
+    public var description: String {
         return data.description
     }
 }
