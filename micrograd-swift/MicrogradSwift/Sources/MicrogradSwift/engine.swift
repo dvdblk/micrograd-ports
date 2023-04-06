@@ -22,7 +22,7 @@ final public class Value: ExpressibleByFloatLiteral {
     }
     var _op: String = ""
     
-    init(_ scalar: Double, children: Set<Value> = Set<Value>()) {
+    public init(_ scalar: Double, children: Set<Value> = Set<Value>()) {
         self.data = scalar
         self._prev = children
     }
@@ -109,7 +109,7 @@ precedencegroup ExponentiationPrecedence {
     higherThan: MultiplicationPrecedence
 }
 infix operator ** : ExponentiationPrecedence
-func ** (lhs: Value, rhs: Value) -> Value {
+public func ** (lhs: Value, rhs: Value) -> Value {
     let out = Value(pow(lhs.data, rhs.data), children: [lhs, rhs])
     
     out._backward = {
