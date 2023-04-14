@@ -1,4 +1,4 @@
-from torch import tensor
+from torch import tensor, Tensor
 
 
 def Value(x):
@@ -10,32 +10,52 @@ def Value(x):
 a = Value(3.0)
 b = Value(4.0)
 c = a * b
-c.retain_grad()
-# c.backward(retain_graph=True)
+d = a * b * b * 3.0
+c = c * c * 1.0
+c = c * 1.0 * c * (a)
+d = d * d * 2.0 * (b * a)
+d = d * 3.0 * d * (b * a)
+d.backward()
+print(d.data.item(), a.grad.item(), b.grad.item())
 
-print(a.grad)
-print(b.grad)
-print(c.grad)
 
-d = Value(-5.0)
-e = Value(16.0)
-f = d + e
-f.retain_grad()
-# f.backward(retain_graph=True)
+def test_single_ops():
+    a = Value(-4.0)
+    b = Value(2.0)
+    c = a + b
+    d = a + b + b + 3.0
+    c = c + c + 1.0
+    c = c + 1.0 + c + (a)
+    d = d + d + 2.0 + (b + a)
+    d = d + 3.0 + d + (b + a)
+    # e = c + d
+    d.backward()
+    print(d.data, a.grad, b.grad)
 
-print(d.grad)
-print(e.grad)
-print(f.grad)
 
-g = c * f
-g.retain_grad()
-g.backward()
-print("-" * 12)
-print(g.item())
-print(a.grad)
-print(b.grad)
-print(c.grad)
-print(d.grad)
-print(e.grad)
-print(f.grad)
-print(g.grad)
+def test_more_ops():
+    a = Tensor([-4.0]).double()
+    b = Tensor([2.0]).double()
+    a.requires_grad = True
+    b.requires_grad = True
+    c = a + b
+    d = a * b + b**3
+    c = c + c + 1
+    c = c + 1 + c + (-a)
+    d = d + d * 2 + (b + a).relu()
+    d = d + 3 * d + (b - a).relu()
+    e = c - d
+    f = e**2
+    g = f / 2.0
+    g = g + 10.0 / f
+    g.backward()
+    apt, bpt, gpt = a, b, g
+
+    print(gpt.data.item())
+    print(apt.grad.item())
+    print(bpt.grad.item())
+
+
+# test_more_ops()
+test_single_ops()
+# test_single_multiply()

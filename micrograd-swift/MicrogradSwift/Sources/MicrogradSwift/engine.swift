@@ -14,7 +14,7 @@ final public class Value: ExpressibleByFloatLiteral {
     /// Variable and function names are intentionally matching the [micrograd](https://github.com/karpathy/micrograd) naming convention.
     public var data: Double
     public var grad: Double = 0
-    var _prev: Set<Value>
+    var _prev: Array<Value>
     var _backward: (() -> Void)? {
         didSet {
             if _backward == nil { _op = "" }
@@ -22,9 +22,15 @@ final public class Value: ExpressibleByFloatLiteral {
     }
     var _op: String = ""
     
-    public init(_ scalar: Double, children: Set<Value> = Set<Value>()) {
+    public init(_ scalar: Double, children: Array<Value> = []) {
         self.data = scalar
-        self._prev = children
+        // convert children to a "set" without changing the order of elements
+        var uniqueChildren = children
+        if children.count == 2, children[0] == children[1] {
+            // binary operation
+            uniqueChildren.remove(at: 1)
+        }
+        self._prev = uniqueChildren
     }
     
     // MARK: Value+ExpressibleByFloatLiteral
@@ -36,7 +42,7 @@ final public class Value: ExpressibleByFloatLiteral {
     public typealias FloatLiteralType = Double
     required public init(floatLiteral value: Double) {
         self.data = value
-        self._prev = Set<Value>()
+        self._prev = [Value]()
     }
 }
 
@@ -44,14 +50,14 @@ final public class Value: ExpressibleByFloatLiteral {
 extension Value: Equatable {
     public static func == (lhs: Value, rhs: Value) -> Bool {
         // just compare the numeric values
-        return lhs.data == rhs.data
+        return lhs === rhs
     }
 }
 
 // MARK: Value+Hashable
 extension Value: Hashable {
     public func hash(into hasher: inout Hasher) {
-        self.data.hash(into: &hasher)
+        hasher.combine(ObjectIdentifier(self))
     }
 }
 
@@ -85,8 +91,8 @@ extension Value {
     
     // MARK: Subtraction
     public static func - (lhs: Value, rhs: Value) -> Value {
-        // Use addition and multiplication
-        let out = lhs + (rhs * (-1.0))
+        // Use addition and negation
+        let out = lhs + (-rhs)
         // Set correct op
         out._op = "-"
         return out
@@ -94,10 +100,19 @@ extension Value {
     
     // MARK: Division
     public static func / (lhs: Value, rhs: Value) -> Value {
-        // Use exponentiation and multiplication
-        let out = lhs ** (rhs * -1.0)
+        // Use multiplication and exponentiation
+        let out = lhs * (rhs ** -1.0)
         // Set correct op
         out._op = "/"
+        return out
+    }
+    
+    // MARK: Negation
+    public static prefix func - (val: Value) -> Value {
+        // Use multiplication
+        let out = -1.0 * val
+        // Set correct op
+        out._op = "neg"
         return out
     }
 }
@@ -113,7 +128,7 @@ public func ** (lhs: Value, rhs: Value) -> Value {
     let out = Value(pow(lhs.data, rhs.data), children: [lhs, rhs])
     
     out._backward = {
-        lhs.grad = rhs.data * (pow(lhs.data, rhs.data-1)) * out.grad
+        lhs.grad += (rhs.data * pow(lhs.data, rhs.data-1)) * out.grad
     }
     out._op = "**"
     
@@ -154,7 +169,7 @@ extension Value {
         let out = Value(max(0, self.data), children: [self])
         
         out._backward = { [unowned self] in
-            self.grad += self.data <= 0 ? 0 : 1 * out.grad
+            self.grad += out.data <= 0 ? 0 : out.grad
         }
         out._op = "relu"
         
@@ -189,7 +204,6 @@ extension Value {
         self.grad = 1
         for node in topo.reversed() {
             node._backward?()
-            // print("\(node) | grad: \(node.grad)")
         }
         
         return self
@@ -201,6 +215,6 @@ extension Value {
 extension Value: CustomStringConvertible {
     /// Equivalent of `__repr__`
     public var description: String {
-        return data.description
+        return "Value(data=\(data.description), grad=\(grad.description))"
     }
 }
