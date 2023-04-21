@@ -9,9 +9,9 @@ version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/micrograd-haskell#readme>
 homepage:       https://github.com/githubuser/micrograd-haskell#readme
 bug-reports:    https://github.com/githubuser/micrograd-haskell/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2023 Author name here
+author:         David Alexander Bielik
+maintainer:     github@dvdblk.com
+copyright:      2023 David Alexander Bielik
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -25,14 +25,19 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Engine
+      NN
   other-modules:
       Paths_micrograd_haskell
   hs-source-dirs:
       src
+  default-extensions:
+      ImportQualifiedPost
+      InstanceSigs
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , containers
   default-language: Haskell2010
 
 executable micrograd-haskell-exe
@@ -41,9 +46,13 @@ executable micrograd-haskell-exe
       Paths_micrograd_haskell
   hs-source-dirs:
       app
+  default-extensions:
+      ImportQualifiedPost
+      InstanceSigs
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers
     , micrograd-haskell
   default-language: Haskell2010
 
@@ -51,11 +60,17 @@ test-suite micrograd-haskell-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      TestEngine
       Paths_micrograd_haskell
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      ImportQualifiedPost
+      InstanceSigs
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -Wtype-defaults
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
+    , containers
     , micrograd-haskell
   default-language: Haskell2010

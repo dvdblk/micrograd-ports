@@ -2,9 +2,9 @@ name:                micrograd-haskell
 version:             0.1.0.0
 github:              "githubuser/micrograd-haskell"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2023 Author name here"
+author:              "David Alexander Bielik"
+maintainer:          "github@dvdblk.com"
+copyright:           "2023 David Alexander Bielik"
 
 extra-source-files:
 - README.md
@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
 
 ghc-options:
 - -Wall
@@ -35,6 +36,10 @@ ghc-options:
 
 library:
   source-dirs: src
+
+default-extensions:
+  - ImportQualifiedPost
+  - InstanceSigs
 
 executables:
   micrograd-haskell-exe:
@@ -55,5 +60,7 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wtype-defaults
     dependencies:
     - micrograd-haskell
+    - HUnit
