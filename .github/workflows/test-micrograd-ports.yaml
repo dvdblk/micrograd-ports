@@ -5,9 +5,10 @@ on:
     paths:
       - '.github/workflows/test-micrograd-ports.yaml'
       - 'micrograd-swift/**'
+      - 'micrograd-haskell/**'
 
 jobs:
-  build:
+  test-micrograd-swift:
     name: Test micrograd-swift
     runs-on: macos-latest
     steps:
@@ -18,3 +19,16 @@ jobs:
       - name: Run tests
         working-directory: micrograd-swift/MicrogradSwift
         run: swift test
+  test-micrograd-haskell:
+    name: Test micrograd-haskell
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: '9.2.7'
+          enable-stack: true
+          stack-version: 'latest'
+      - name: Run tests
+        working-directory: micrograd-haskell
+        run: stack test
