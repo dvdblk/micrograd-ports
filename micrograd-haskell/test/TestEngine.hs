@@ -4,7 +4,6 @@ module TestEngine (
 
 import Engine
 import Test.HUnit
-import Data.Set qualified as Set
 
 testValueInit :: Test
 testValueInit =
@@ -112,7 +111,7 @@ testValueExponentiationGradient :: Test
 testValueExponentiationGradient =
     TestCase
         ( do
-            assertEqual "Exponentiation gradient should be correct" (grad . head . Set.toList . _prev . _backward $ defaultValue (2 :: Double) ** defaultValue 4) (-24)
+            assertEqual "Exponentiation gradient should be correct" 32 (grad . head . _prev . _backward . incrementGrad 1 $ defaultValue (2 :: Double) ** defaultValue 4)
         )
 
 testsEngine :: Test
