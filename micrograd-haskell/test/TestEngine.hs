@@ -18,93 +18,93 @@ testChangeValueOperation :: Test
 testChangeValueOperation =
     TestCase
         ( do
-            assertEqual "Operation should be default" (_op $ defaultValue (3 :: Integer)) ""
-            assertEqual "Operation should be changed" (_op $ changeValueOperation "test" $ defaultValue (3 :: Integer)) "test"
+            assertEqual "Operation should be default" "" (_op $ defaultValue (3 :: Integer))
+            assertEqual "Operation should be changed" "test" (_op $ changeValueOperation "test" $ defaultValue (3 :: Integer))
         )
 
 testAdditionMultiplication :: Test
 testAdditionMultiplication =
     TestCase
         ( do
-            assertEqual "Addition should be correct" (_data $ defaultValue (-12.0 :: Double) + defaultValue 24.0) 12
-            assertEqual "Addition should be correct" (_data $ defaultValue (-4.0 :: Double) + defaultValue (-2.0)) (-6)
-            assertEqual "Addition should be correct" (_data $ defaultValue (3 :: Integer) + defaultValue 2) (_data $ defaultValue 5)
-            assertEqual "Multiplication should be correct" (_data $ defaultValue (-12.0 :: Double) * defaultValue 24.0) (-288)
-            assertEqual "Multiplication should be correct" (_data $ defaultValue (-4.0 :: Double) * defaultValue (-2.0)) 8
-            assertEqual "Multiplication should be correct" (_data $ defaultValue (3 :: Integer) * defaultValue 2) (_data $ defaultValue 6)
-            assertEqual "Multiplication and addition should be correct" (_data $ defaultValue (-12.0 :: Double) * defaultValue 24.0 + defaultValue 3.0) (-285)
+            assertEqual "Addition should be correct" 12 (_data $ defaultValue (-12.0 :: Double) + defaultValue 24.0)
+            assertEqual "Addition should be correct" (-6) (_data $ defaultValue (-4.0 :: Double) + defaultValue (-2.0))
+            assertEqual "Addition should be correct" 5 (_data $ defaultValue (3 :: Integer) + defaultValue 2)
+            assertEqual "Multiplication should be correct" (-288) (_data $ defaultValue (-12.0 :: Double) * defaultValue 24.0)
+            assertEqual "Multiplication should be correct" 8 (_data $ defaultValue (-4.0 :: Double) * defaultValue (-2.0))
+            assertEqual "Multiplication should be correct" 6 (_data $ defaultValue (3 :: Integer) * defaultValue 2)
+            assertEqual "Multiplication and addition should be correct" (-285) (_data $ defaultValue (-12.0 :: Double) * defaultValue 24.0 + defaultValue 3.0)
         )
 
 testValueSubtraction :: Test
 testValueSubtraction =
     TestCase
         ( do
-            assertEqual "Subtraction should be correct" (_data $ defaultValue (-12.0 :: Double) - defaultValue 24.0) (-36)
-            assertEqual "Subtraction should be correct" (_data $ defaultValue (-4.0 :: Double) - defaultValue (-2.0)) (-2)
-            assertEqual "Subtraction should be correct" (_data $ defaultValue (3 :: Integer) - defaultValue 2) (_data $ defaultValue 1)
+            assertEqual "Subtraction should be correct" (-36) (_data $ defaultValue (-12.0 :: Double) - defaultValue 24.0)
+            assertEqual "Subtraction should be correct" (-2) (_data $ defaultValue (-4.0 :: Double) - defaultValue (-2.0))
+            assertEqual "Subtraction should be correct" 1 (_data $ defaultValue (3 :: Integer) - defaultValue 2)
         )
 
 testValueBonusFunctions :: Test
 testValueBonusFunctions =
     TestCase
         ( do
-            assertEqual "Abs should be correct" (_data $ abs $ defaultValue (-12.0 :: Double)) 12
-            assertEqual "Signum should be negative" (_data $ signum $ defaultValue (-12.0 :: Double)) (-1)
-            assertEqual "Signum should be positive" (_data $ signum $ defaultValue (12.0 :: Double)) 1
-            assertEqual "Signum should be zero" (_data $ signum $ defaultValue (0.0 :: Double)) 0
-            assertEqual "fromInteger should be correct" (_data $ fromInteger (3 :: Integer)) (3 :: Integer)
+            assertEqual "Abs should be correct" 12 (_data $ abs $ defaultValue (-12.0 :: Double))
+            assertEqual "Signum should be negative" (-1) (_data $ signum $ defaultValue (-12.0 :: Double))
+            assertEqual "Signum should be positive" 1 (_data $ signum $ defaultValue (12.0 :: Double))
+            assertEqual "Signum should be zero" 0 (_data $ signum $ defaultValue (0.0 :: Double))
+            assertEqual "fromInteger should be correct" (3 :: Integer) (_data $ fromInteger (3 :: Integer))
         )
 
 testValueDivision :: Test
 testValueDivision =
     TestCase
         ( do
-            assertEqual "Division should be correct" (_data $ defaultValue (-12.0 :: Double) / defaultValue 24.0) (-0.5)
-            assertEqual "Division should be correct" (_data $ defaultValue (-4.0 :: Double) / defaultValue (-2.0)) 2
-            assertEqual "Division should be correct" (_data $ defaultValue (3 :: Double) / defaultValue 2) (_data $ defaultValue 1.5)
+            assertEqual "Division should be correct" (-0.5) (_data $ defaultValue (-12.0 :: Double) / defaultValue 24.0)
+            assertEqual "Division should be correct" 2 (_data $ defaultValue (-4.0 :: Double) / defaultValue (-2.0))
+            assertEqual "Division should be correct" 1.5 (_data $ defaultValue (3 :: Double) / defaultValue 2)
         )
 
 testValueRecip :: Test
 testValueRecip =
     TestCase
         ( do
-            assertEqual "Recip should be correct" (_data $ recip $ defaultValue (-12.0 :: Double)) (-0.08333333333333333)
-            assertEqual "Recip should be correct" (_data $ recip $ defaultValue (-4.0 :: Double)) (-0.25)
-            assertEqual "Recip should be correct" (_data $ recip $ defaultValue (3 :: Double)) (_data $ defaultValue 0.3333333333333333)
+            assertEqual "Recip should be correct" (-0.08333333333333333) (_data $ recip $ defaultValue (-12.0 :: Double))
+            assertEqual "Recip should be correct" (-0.25) (_data $ recip $ defaultValue (-4.0 :: Double))
+            assertEqual "Recip should be correct" 0.3333333333333333 (_data $ recip $ defaultValue (3 :: Double))
         )
 
 testValueExponentiation :: Test
 testValueExponentiation =
     TestCase
         ( do
-            assertEqual "Exponentiation should be correct" (_data $ defaultValue (-12.0 :: Double) ** defaultValue 2) 144.0
-            assertEqual "Exponentiation should be correct" (_data $ defaultValue (-4.0 :: Double) ** defaultValue (-2.0)) 0.0625
-            assertEqual "Exponentiation should be correct" (_data $ defaultValue (3.0 :: Double) ** defaultValue 2) (_data $ defaultValue 9)
+            assertEqual "Exponentiation should be correct" 144.0 (_data $ defaultValue (-12.0 :: Double) ** defaultValue 2)
+            assertEqual "Exponentiation should be correct" 0.0625 (_data $ defaultValue (-4.0 :: Double) ** defaultValue (-2.0))
+            assertEqual "Exponentiation should be correct" 9 (_data $ defaultValue (3.0 :: Double) ** defaultValue 2)
         )
 
 testValueNegate :: Test
 testValueNegate =
     TestCase
         ( do
-            assertEqual "Negate value should be positive" (_data $ negate $ defaultValue (-12.0 :: Double)) 12
-            assertEqual "Negate value should be positive" (_data $ negate $ defaultValue (-4.0 :: Double)) 4
-            assertEqual "Negate value should be negative" (_data $ negate $ defaultValue (3 :: Double)) (-3)
+            assertEqual "Negate value should be positive" 12 (_data $ negate $ defaultValue (-12.0 :: Double))
+            assertEqual "Negate value should be positive" 4 (_data $ negate $ defaultValue (-4.0 :: Double))
+            assertEqual "Negate value should be negative" (-3) (_data $ negate $ defaultValue (3 :: Double))
         )
 
 testValueRelu :: Test
 testValueRelu =
     TestCase
         ( do
-            assertEqual "Relu should be 0" (_data . relu . defaultValue $ (-12.0 :: Double)) 0
-            assertEqual "Relu should be linear" (_data . relu . defaultValue $ 3 :: Integer) 3
+            assertEqual "Relu should be 0" 0 (_data . relu . defaultValue $ (-12.0 :: Double))
+            assertEqual "Relu should be linear" 3 (_data . relu . defaultValue $ 3 :: Integer)
         )
 
 testValueExponential :: Test
 testValueExponential =
     TestCase
         ( do
-            assertEqual "Exponential should be correct" (_data . Engine.exp . defaultValue $ (-2.0 :: Double)) 0.1353352832366127
-            assertEqual "Exponential should be correct" (_data . Engine.exp . defaultValue $ (3 :: Double)) 20.085536923187668
+            assertEqual "Exponential should be correct" 0.1353352832366127 (_data . Engine.exp . defaultValue $ (-2.0 :: Double))
+            assertEqual "Exponential should be correct" 20.085536923187668 (_data . Engine.exp . defaultValue $ (3 :: Double))
         )
 
 testValueExponentiationGradient :: Test
