@@ -4,6 +4,7 @@
 module Engine (
   Value (..),
   defaultValue,
+  valueInit,
   changeValueOperation,
   relu,
   Engine.tanh,
@@ -65,7 +66,7 @@ instance (Num a, Ord a) => Num (Value a) where
 
 instance (Floating a, Ord a) => Fractional (Value a) where
   (/) :: Value a -> Value a -> Value a
-  v1 / v2 = v1 * (v2 ** (-1))
+  v1 / v2 = changeValueOperation "/" $ v1 * (v2 ** (-1))
 
   -- | recip is not supported by OG micrograd
   recip :: Value a -> Value a
@@ -81,7 +82,7 @@ instance (Floating a, Ord a) => Floating (Value a) where
   exp :: Value a -> Value a
   exp v@(Value x _ _ _) = valueInit (Prelude.exp x) "exp" [v]
 
-  -- | all the other functions are not supported by OG micrograd
+  -- | functions which are not supported by OG micrograd
   pi = undefined
   log = undefined
   sin = undefined
@@ -115,7 +116,23 @@ _backward v@(Value _ g "**" [v1, v2]) = v { _prev = [incrementGrad (_data v2 * _
 _backward v@(Value _ g "relu" [v1]) = v { _prev = [incrementGrad (g * if _data v1 > 0 then 1 else 0) v1] }
 _backward v@(Value _ g "exp" [v1]) = v { _prev = [incrementGrad (_data v1 * g) v1] }
 _backward v@(Value _ g "tanh" [v1]) = v { _prev = [incrementGrad ((1 - _data v1 ** 2) * g) v1] }
-_backward (Value _ _ op prev) = error $ "Invalid operation (" ++ op ++ ") in _backward for prev: " ++ show prev
+-- workaround for duplicit values in required binary operations (+), (*)
+_backward v@(Value _ g "*" [v1]) = v { _prev = [incrementGrad (2 * g * _data v1) v1] }
+_backward v@(Value _ g "+" [v1]) = v { _prev = [incrementGrad (2 * g) v1] }
+_backward v@(Value _ _ op prev) = case (op, prev) of
+  -- redirect negation to multiplication by -1
+  ("neg", _) -> redirect "neg" "*" v
+  -- redirect subtraction to addition of negation
+  ("-", _) -> redirect "-" "+" v
+  -- redirect division to multiplication by reciprocal
+  ("/", _) -> redirect "/" "*" v
+  -- default case
+  ("", _) -> v
+  -- catch-all for unsupported operations
+  (_, _) -> error $ "Invalid operation (" ++ op ++ ") in _backward for prev: " ++ show prev
+  where
+    -- | redirect redirects a given operation to another operation and backpropagates the gradient.
+    redirect from to = changeValueOperation from . _backward . changeValueOperation to
 
 -- | prevToEdges converts a computation graph from a given `Value` to a list of edges.
 prevToEdges :: Value a -> [(Value a, Int, [Int])]
@@ -129,9 +146,18 @@ prevToEdges = traverseComputationGraph 0
         traverseComputationGraph i v@(Value _ _ _ [v1, v2]) = (v, i, [i + 1, i + 2]) : (traverseComputationGraph (i + 1) v1) ++ (traverseComputationGraph (i + 2) v2)
         traverseComputationGraph _ _ = error "Invalid computation graph"
 
+reverseList :: [a] -> [a]
+reverseList = foldl (flip (:)) []
+
 -- | backward computes the gradient of every `Value` in the computation graph in a topological order.
 -- It also sets the gradient of the topmost node to 1.
 backward :: (Show a, Floating a, Ord a) => Value a -> Value a
-backward v = head . map (\(val, _, _) -> _backward val) . map vertexToNode $ G.topSort graph
+backward v = head . map ((\(val, _, _) -> _backward val) . vertexToNode) . reverseList . G.topSort $ graph
   where topNode = v { grad = 1 }
         (graph, vertexToNode, _) = G.graphFromEdges . prevToEdges $ topNode
+
+
+a = (defaultValue (3 :: Double) * defaultValue 4) * (defaultValue (-5) + defaultValue 16)
+bw v = map vertexToNode . reverseList . G.topSort $ graph
+  where topNode = v { grad = 1 }
+        (graph, vertexToNode, keyToVertex) = G.graphFromEdges . prevToEdges $ topNode
