@@ -6,10 +6,10 @@ module Engine (
   defaultValue,
   changeValueOperation,
   relu,
-  Engine.exp,
   Engine.tanh,
   incrementGrad,
-  _backward
+  _backward,
+  backward
 )
 where
 
@@ -23,7 +23,7 @@ data Value a = Value
   , grad :: a
     -- | Operation that created this `Value`
   , _op :: String
-    -- | Previous values that created this `Value`
+    -- | List of previous values that created this `Value`
   , _prev :: [Value a]
   }
   deriving (Show, Eq, Ord)
@@ -34,7 +34,7 @@ defaultValue v = Value v 0 "" []
 
 -- | valueInit creates a new `Value` with the given data, operation, and ensures unique previous values.
 valueInit :: (Eq a, Num a) => a -> String -> [Value a] -> Value a
-valueInit v op [x, y] | x == y = Value v 0 op [x]
+valueInit v op [x, y] | x == y && op /= "**" = Value v 0 op [x]
                       | otherwise = Value v 0 op [x, y]
 valueInit v op prev = Value v 0 op prev
 
@@ -77,14 +77,27 @@ instance (Floating a, Ord a) => Floating (Value a) where
   (**) :: Value a -> Value a -> Value a
   v1@(Value x _ _ _) ** v2@(Value y _ _ _) = valueInit (x ** y) "**" [v1, v2]
 
+  -- | Applies the exponential function to the given `Value`.
+  exp :: Value a -> Value a
+  exp v@(Value x _ _ _) = valueInit (Prelude.exp x) "exp" [v]
+
+  -- | all the other functions are not supported by OG micrograd
+  pi = undefined
+  log = undefined
+  sin = undefined
+  cos = undefined
+  asin = undefined
+  acos = undefined
+  atan = undefined
+  sinh = undefined
+  cosh = undefined
+  asinh = undefined
+  acosh = undefined
+  atanh = undefined
 
 -- | Applies the rectified linear unit function to the given `Value`.
 relu :: (Num a, Ord a) => Value a -> Value a
 relu v@(Value x _ _ _) = valueInit (max 0 x) "relu" [v]
-
--- | Applies the exponential function to the given `Value`.
-exp :: (Floating a, Ord a) => Value a -> Value a
-exp v@(Value x _ _ _) = valueInit (Prelude.exp x) "exp" [v]
 
 -- | Applies the hyperbolic tangent function to the given `Value`.
 tanh :: (Floating a, Ord a) => Value a -> Value a
@@ -102,16 +115,23 @@ _backward v@(Value _ g "**" [v1, v2]) = v { _prev = [incrementGrad (_data v2 * _
 _backward v@(Value _ g "relu" [v1]) = v { _prev = [incrementGrad (g * if _data v1 > 0 then 1 else 0) v1] }
 _backward v@(Value _ g "exp" [v1]) = v { _prev = [incrementGrad (_data v1 * g) v1] }
 _backward v@(Value _ g "tanh" [v1]) = v { _prev = [incrementGrad ((1 - _data v1 ** 2) * g) v1] }
-_backward v@(Value _ _ op prev) = error $ "Invalid operation (" ++ op ++ ") in _backward for prev: " ++ show prev
+_backward (Value _ _ op prev) = error $ "Invalid operation (" ++ op ++ ") in _backward for prev: " ++ show prev
 
+-- | prevToEdges converts a computation graph from a given `Value` to a list of edges.
 prevToEdges :: Value a -> [(Value a, Int, [Int])]
 prevToEdges = traverseComputationGraph 0
   where traverseComputationGraph :: Int -> Value a -> [(Value a, Int, [Int])]
+        -- | If the Value has no previous Values, it is a leaf node and has no edges.
         traverseComputationGraph i v@(Value _ _ _ []) = [(v, i, [])]
+        -- | If the Value has one previous Value, it has one edge.
         traverseComputationGraph i v@(Value _ _ _ [v1]) = (v, i, [i + 1]) : traverseComputationGraph (i + 1) v1
+        -- | If the Value has two previous Values, it has two edges.
         traverseComputationGraph i v@(Value _ _ _ [v1, v2]) = (v, i, [i + 1, i + 2]) : (traverseComputationGraph (i + 1) v1) ++ (traverseComputationGraph (i + 2) v2)
+        traverseComputationGraph _ _ = error "Invalid computation graph"
 
--- | backward computes the gradient of every Value in the computation graph in a topological order.
+-- | backward computes the gradient of every `Value` in the computation graph in a topological order.
 -- It also sets the gradient of the topmost node to 1.
---backward :: (Num a, Ord a) => Value a -> Value a
---backward v@(Value _ _ _ prev) = G.graphFromEdges . prevToEdges $ topNode where topNode = v { grad = 1 }
+backward :: (Show a, Floating a, Ord a) => Value a -> Value a
+backward v = head . map (\(val, _, _) -> _backward val) . map vertexToNode $ G.topSort graph
+  where topNode = v { grad = 1 }
+        (graph, vertexToNode, _) = G.graphFromEdges . prevToEdges $ topNode

@@ -103,8 +103,8 @@ testValueExponential :: Test
 testValueExponential =
     TestCase
         ( do
-            assertEqual "Exponential should be correct" 0.1353352832366127 (_data . Engine.exp . defaultValue $ (-2.0 :: Double))
-            assertEqual "Exponential should be correct" 20.085536923187668 (_data . Engine.exp . defaultValue $ (3 :: Double))
+            assertEqual "Exponential should be correct" 0.1353352832366127 (_data . exp . defaultValue $ (-2.0 :: Double))
+            assertEqual "Exponential should be correct" 20.085536923187668 (_data . exp . defaultValue $ (3 :: Double))
         )
 
 testValueExponentiationGradient :: Test
@@ -112,6 +112,7 @@ testValueExponentiationGradient =
     TestCase
         ( do
             assertEqual "Exponentiation gradient should be correct" 32 (grad . head . _prev . _backward . incrementGrad 1 $ defaultValue (2 :: Double) ** defaultValue 4)
+            assertEqual "Exponentiation gradient should be correct" 4 (grad . head . _prev . backward $ defaultValue (2 :: Double) ** defaultValue 2)
         )
 
 testsEngine :: Test
