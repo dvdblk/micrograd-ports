@@ -7,7 +7,7 @@ A workspace playground can be found in [MicrogradSwift-Playground](MicrogradSwif
 ```Swift
 import MicrogradSwift
 
-// Create simple dataset
+// Create a simple dataset
 let xs: [[Value]] = [
     [2.0, 3.0, -1.0],
     [3.0, -1.0, 0.5],
