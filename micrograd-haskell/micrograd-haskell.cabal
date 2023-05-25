@@ -25,7 +25,7 @@ source-repository head
 
 library
   exposed-modules:
-      Engine
+      EngineReverse
       NN
   other-modules:
       Paths_micrograd_haskell
@@ -60,7 +60,7 @@ test-suite micrograd-haskell-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      TestEngine
+      TestEngineReverse
       Paths_micrograd_haskell
   hs-source-dirs:
       test

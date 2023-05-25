@@ -1,6 +1,6 @@
-import TestEngine (testsEngine)
+import TestEngineReverse (testsEngineReverse)
 
 import Test.HUnit
 
 main :: IO Counts
-main = do runTestTT testsEngine
+main = do runTestTT testsEngineReverse

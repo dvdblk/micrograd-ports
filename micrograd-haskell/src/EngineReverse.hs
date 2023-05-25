@@ -1,13 +1,13 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 {-# HLINT ignore "Use -" #-}
-module Engine (
+module EngineReverse (
   Value (..),
   defaultValue,
   valueInit,
   changeValueOperation,
   relu,
-  Engine.tanh,
+  EngineReverse.tanh,
   incrementGrad,
   _backward,
   backward
@@ -156,8 +156,8 @@ backward v = head . map ((\(val, _, _) -> _backward val) . vertexToNode) . rever
   where topNode = v { grad = 1 }
         (graph, vertexToNode, _) = G.graphFromEdges . prevToEdges $ topNode
 
-
-a = (defaultValue (3 :: Double) * defaultValue 4) * (defaultValue (-5) + defaultValue 16)
-bw v = map vertexToNode . reverseList . G.topSort $ graph
-  where topNode = v { grad = 1 }
-        (graph, vertexToNode, keyToVertex) = G.graphFromEdges . prevToEdges $ topNode
+-- for debugging
+-- a = (defaultValue (3 :: Double) * defaultValue 4) * (defaultValue (-5) + defaultValue 16)
+-- bw v = map vertexToNode . reverseList . G.topSort $ graph
+--   where topNode = v { grad = 1 }
+--         (graph, vertexToNode, keyToVertex) = G.graphFromEdges . prevToEdges $ topNode
