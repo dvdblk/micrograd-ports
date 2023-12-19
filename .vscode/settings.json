@@ -1,5 +1,0 @@
-{
-    "haskell.formattingProvider": "ormolu",
-    "haskell.manageHLS": "GHCup",
-    "haskell.serverExecutablePath": ""
-}
