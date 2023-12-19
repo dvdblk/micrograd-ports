@@ -1,2 +1,6 @@
-main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+import TestEngineReverse (testsEngineReverse)
+
+import Test.HUnit
+
+main :: IO Counts
+main = do runTestTT testsEngineReverse
